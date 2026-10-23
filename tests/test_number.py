@@ -58,7 +58,7 @@ class TestAsyncSetupEntry:
 
         await async_setup_entry(hass, entry, mock_add_entities)
 
-        assert len(added_entities) == 3
+        assert len(added_entities) == 2
         for entity in added_entities:
             assert isinstance(entity, RemiNumberEntity)
 
@@ -94,44 +94,28 @@ class TestRemiNumberEntity:
         mock_coordinator.client.update_remi.assert_awaited_once_with({"volume": 80})
         mock_coordinator.async_request_refresh.assert_awaited_once()
 
-    def test_luminosity_entity_properties(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
-        assert entity.entity_description.name == "Screen Brightness"
-        assert entity.icon == "mdi:brightness-6"
-
-    def test_luminosity_native_value(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
-        assert entity.native_value == 60
-
-    def test_luminosity_default_value_when_missing(self, mock_coordinator):
-        mock_coordinator.remi.pop("luminosity")
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
-        assert entity.native_value == 50
-
-    async def test_luminosity_set_value(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
-        await entity.async_set_native_value(90)
-
-        mock_coordinator.client.update_remi.assert_awaited_once_with({"luminosity": 90})
-
     def test_noise_threshold_entity_properties(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[2])
+        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
         assert entity.entity_description.name == "Noise Alert Threshold"
         assert entity.icon == "mdi:microphone"
 
     def test_noise_threshold_native_value(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[2])
+        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
         assert entity.native_value == 30
 
     def test_noise_threshold_default_value_when_missing(self, mock_coordinator):
         mock_coordinator.remi.pop("noise_notification_threshold")
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[2])
+        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
         assert entity.native_value == 0
 
     async def test_noise_threshold_set_value(self, mock_coordinator):
-        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[2])
+        entity = RemiNumberEntity(mock_coordinator, NUMBER_DESCRIPTIONS[1])
         await entity.async_set_native_value(45)
 
         mock_coordinator.client.update_remi.assert_awaited_once_with(
             {"noise_notification_threshold": 45}
         )
+
+
+def test_brightness_number_is_removed():
+    assert all(description.key != "luminosity" for description in NUMBER_DESCRIPTIONS)
