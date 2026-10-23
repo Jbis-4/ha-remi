@@ -1,10 +1,31 @@
-# Home Assistant Remi Integration
+# Home Assistant REMI Integration — Jbis-4 fork
 
 > **Unofficial** Home Assistant integration for the [UrbanHello Remi](https://www.urbanhello.com/) smart alarm clock.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
-This is a community-maintained integration and is **not affiliated with or endorsed by UrbanHello**.
+This repository is a fork of [timoa/ha-remi](https://github.com/timoa/ha-remi),
+the original Home Assistant integration created by [@timoa](https://github.com/timoa).
+It adds fixes developed and tested on two physical REMI devices running
+firmware versions **329 and 332**.
+
+Relevant fixes are proposed to the original project through focused pull requests.
+An open PR is a proposal and does not mean the maintainer has accepted or merged it.
+This community integration is **not affiliated with or endorsed by UrbanHello**.
+
+## Changes in this fork
+
+| Change | Description | Upstream status |
+|--------|-------------|-----------------|
+| Temperature | Corrected the raw temperature conversion to `(temp + 40) / 10`. | [PR #21](https://github.com/timoa/ha-remi/pull/21) — Open |
+| Brightness | Replaced the old number entity with a dimmable light that restores its previous nonzero brightness when switched on; removed the misleading illuminance sensor. | [PR #23](https://github.com/timoa/ha-remi/pull/23) — Open |
+| RGB entities | Removed the ineffective Night Light control and clarified the App Background Color entity. | [PR #24](https://github.com/timoa/ha-remi/pull/24) — Open |
+| Noise Alert Threshold | Extended the supported range from 0–100 to 0–250. | [PR #22](https://github.com/timoa/ha-remi/pull/22) — Open |
+| Multi-REMI reliability | Preserve the selected device identifier during API reconnections and verify device identity in API responses to avoid mixing devices. | Fork only — not yet submitted upstream |
+
+Upstream status checked on **23 October 2026**. All four linked PRs are open and
+have not been merged; follow the links for their current status. The features
+and migration notes below describe this fork. The original version may differ.
 
 ---
 
@@ -29,13 +50,26 @@ This is a community-maintained integration and is **not affiliated with or endor
 
 ## Installation
 
-### Via HACS (recommended)
+### Original version — HACS catalog
 
-1. Open HACS in Home Assistant
-2. Go to **Integrations** → **⋮** → **Custom repositories**
-3. Add `https://github.com/timoa/ha-remi` as an **Integration**
-4. Search for **Remi** and install it
-5. Restart Home Assistant
+1. Open **HACS** and search the catalog for **Remi**.
+2. Select the original integration from [timoa/ha-remi](https://github.com/timoa/ha-remi).
+3. Download it and restart Home Assistant.
+
+### This fork — HACS custom repository
+
+1. Open **HACS** → **⋮** → **Custom repositories**.
+2. Add `https://github.com/Jbis-4/ha-remi` with type **Integration**.
+3. Select this fork's **Remi** entry and download it.
+4. Restart Home Assistant.
+
+The changes described here are on this fork's `main` branch. If HACS offers a
+version selector, choose a version containing these changes.
+
+**Choose one version.** The original and this fork use the same integration
+domain, `urbanhello_remi_unofficial`, and the same `custom_components` folder.
+They must not be installed simultaneously. When switching versions, replace the
+existing installation rather than keeping both copies.
 
 ### Manual
 
@@ -49,7 +83,8 @@ This is a community-maintained integration and is **not affiliated with or endor
 1. Go to **Settings → Integrations → Add Integration**
 2. Search for **Remi**
 3. Enter your UrbanHello account **username** and **password**
-4. The integration will authenticate and discover your Remi device automatically
+4. The integration authenticates and discovers the REMIs on your account.
+5. If several devices are found, select the one to add. Repeat the setup for each REMI.
 
 ---
 
@@ -67,12 +102,16 @@ This is a community-maintained integration and is **not affiliated with or endor
 | Firmware Update Available | Binary Sensor | Whether a firmware update is available |
 | Clock Face | Select | Change the displayed face |
 | Clock Format | Select | 12h or 24h format |
-| Music Mode | Select | Off / Music / White Noise |
+| Music Mode | Select | API mode selection; mapping remains unverified |
 | Volume | Number | Speaker volume (0–100) |
 | Brightness | Light | Dimmable upper light (off at 0%, maximum at 100%) |
-| Noise Alert Threshold | Number | Noise notification threshold (0–100) |
+| Noise Alert Threshold | Number | Noise notification threshold (0–250) |
 | App Background Color | Light | Color associated with the REMI in the official app |
 | Alarm (per alarm) | Switch | Enable/disable individual alarms |
+
+The Music Mode labels, including the option labelled `White Noise`, remain
+unverified. Their presence in the selector does not confirm the corresponding
+playback behavior.
 
 ---
 
@@ -82,8 +121,8 @@ Brightness is now a dimmable `light`, using the same API `luminosity` setting
 (0–100). The old `number` and the incorrectly labelled lux sensor are no longer
 created. Previously registered entities may remain unavailable and can be removed
 manually in Home Assistant. These obsolete entries are not automatically deleted
-from the entity registry, and automation references are not rewritten. No ambient illuminance
-sensor is provided.
+from the entity registry, and automation references are not rewritten. No ambient
+illuminance sensor is provided.
 
 Update automations that used `number.*_brightness` (or a renamed brightness
 number) to target the new light entity shown on the REMI device page. Entity IDs
@@ -136,14 +175,14 @@ reset existing values on UrbanHello's servers.
 The obsolete Night Light entry may remain unavailable after an upgrade. Remove
 it manually along with references in dashboards, scripts and automations, or
 remove and re-add the integration if you do not need to retain its entities.
-These obsolete light entries are not automatically deleted. The app background color
-is not a replacement for a physical light.
+These obsolete light entries are not automatically deleted. The app background
+color is not a replacement for a physical light.
 
 ## Alarm Services
 
 Alarms are managed via HA services (callable from automations or Developer Tools → Services).
 
-### `remi.create_alarm`
+### `urbanhello_remi_unofficial.create_alarm`
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -154,11 +193,11 @@ Alarms are managed via HA services (callable from automations or Developer Tools
 | `face_define` | — | Face at alarm time (e.g. `FACE_DAY`) |
 | `volume` | — | Volume override (0–100) |
 
-### `remi.update_alarm`
+### `urbanhello_remi_unofficial.update_alarm`
 
 Same fields as `create_alarm`, plus `event_id` (required) — the `objectId` of the alarm to update.
 
-### `remi.delete_alarm`
+### `urbanhello_remi_unofficial.delete_alarm`
 
 | Field | Required | Description |
 |-------|----------|-------------|
@@ -167,6 +206,9 @@ Same fields as `create_alarm`, plus `event_id` (required) — the `objectId` of 
 ---
 
 ## Credits
+
+The original integration was created by [@timoa](https://github.com/timoa):
+[timoa/ha-remi](https://github.com/timoa/ha-remi).
 
 This integration was inspired by [Remi_UrbanHello_hass](https://github.com/pdruart/Remi_UrbanHello_hass) by [@pdruart](https://github.com/pdruart), which provided valuable insights into the alarm toggle functionality and brightness control.
 
