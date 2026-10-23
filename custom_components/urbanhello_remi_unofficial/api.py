@@ -98,7 +98,9 @@ class RemiApiClient:
             all_remi_ids = [current_remi_id]
 
         self._session_token = session_token
-        self._remi_id = current_remi_id
+        # A refreshed session must not replace the device selected by the entry.
+        if self._remi_id is None:
+            self._remi_id = current_remi_id
         return session_token, current_remi_id, all_remi_ids
 
     async def _request(
@@ -118,24 +120,27 @@ class RemiApiClient:
                 await self.login()
                 return await self._request(method, path, payload, retry_auth=False)
             if resp.status not in (200, 201):
-                text = await resp.text()
-                raise RemiApiError(f"API error {resp.status} on {path}: {text}")
+                # Paths and server error bodies can contain private identifiers.
+                raise RemiApiError(f"API error {resp.status}")
             return await resp.json()
 
     async def get_remi(self) -> dict[str, Any]:
         """Fetch the Remi device state."""
+        expected_id = self._remi_id
         data = await self._request(
             "POST",
             "/parse/classes/Remi",
             {
                 "limit": "1",
-                "where": {"objectId": self._remi_id},
+                "where": {"objectId": expected_id},
                 "_method": "GET",
             },
         )
         results = data.get("results", [])
         if not results:
             raise RemiApiError("No Remi device found")
+        if not expected_id or results[0].get("objectId") != expected_id:
+            raise RemiApiError("Remi response does not match the selected device")
         return results[0]
 
     async def update_remi(self, fields: dict[str, Any]) -> dict[str, Any]:

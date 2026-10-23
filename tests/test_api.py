@@ -198,6 +198,57 @@ class TestGetRemi:
         with pytest.raises(RemiApiError, match="No Remi device found"):
             await client.get_remi()
 
+    @pytest.mark.parametrize("response", [{"objectId": "other-device"}, {"lux": 12}])
+    async def test_rejects_wrong_or_missing_device(self, client, mock_session, response):
+        mock_session.request.return_value = _make_response(200, {"results": [response]})
+        with pytest.raises(RemiApiError, match="does not match"):
+            await client.get_remi()
+
+    async def test_reauth_preserves_selected_device_for_subsequent_reads(self, client, mock_session):
+        mock_session.request.side_effect = [
+            _make_response(401, {}),
+            _make_response(200, {"results": [MOCK_REMI_DATA]}),
+            _make_response(200, {"results": []}),
+        ]
+        mock_session.post.return_value = _make_response(200, {
+            **MOCK_LOGIN_RESPONSE,
+            "sessionToken": "replacement-token",
+            "currentRemi": {"objectId": "other-device"},
+            "remis": [MOCK_REMI_ID, "other-device"],
+        })
+        assert await client.get_remi() == MOCK_REMI_DATA
+        await client.get_events()
+        assert client.remi_id == MOCK_REMI_ID
+        assert client.session_token == "replacement-token"
+        calls = mock_session.request.call_args_list
+        assert len(calls) == 3
+        assert all(call.args[0] == "POST" for call in calls)
+        assert all(call.kwargs["json"]["_method"] == "GET" for call in calls)
+        assert calls[0].kwargs["json"]["where"]["objectId"] == MOCK_REMI_ID
+        assert calls[1].kwargs["json"]["where"]["objectId"] == MOCK_REMI_ID
+        assert calls[2].kwargs["json"]["where"]["remi"]["objectId"] == MOCK_REMI_ID
+        mock_session.post.assert_called_once()
+
+    async def test_error_does_not_expose_path_or_body(self, client, mock_session):
+        response = _make_response(403, {"error": "private-token private-device"})
+        mock_session.request.return_value = response
+        with pytest.raises(RemiApiError) as exc:
+            await client._request("GET", "/private-device")
+        assert str(exc.value) == "API error 403"
+        response.text.assert_not_awaited()
+
+    async def test_wrong_device_after_reauth_is_rejected(self, client, mock_session):
+        mock_session.request.side_effect = [
+            _make_response(401, {}),
+            _make_response(200, {"results": [{"objectId": "other-device", "lux": 2}]}),
+        ]
+        mock_session.post.return_value = _make_response(200, {
+            **MOCK_LOGIN_RESPONSE, "currentRemi": {"objectId": "other-device"},
+        })
+        with pytest.raises(RemiApiError, match="does not match"):
+            await client.get_remi()
+        assert client.remi_id == MOCK_REMI_ID
+
 
 class TestGetEvents:
     """Tests for RemiApiClient.get_events()."""
