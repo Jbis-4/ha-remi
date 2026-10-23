@@ -13,6 +13,7 @@ from custom_components.urbanhello_remi_unofficial.coordinator import (
 )
 from custom_components.urbanhello_remi_unofficial.light import (
     RemiBackgroundLightEntity,
+    RemiBrightnessLightEntity,
     RemiNightLightEntity,
     async_setup_entry,
 )
@@ -44,11 +45,10 @@ def mock_coordinator_with_lights():
 class TestAsyncSetupEntry:
     """Tests for async_setup_entry."""
 
-    @pytest.mark.skip(reason="Requires full HA platform setup - covered by other tests")
-    async def test_adds_night_and_background_light(self, hass: HomeAssistant, mock_coordinator_with_lights):
+    async def test_adds_brightness_night_and_background_light(self, hass: HomeAssistant, mock_coordinator_with_lights):
         added_entities = []
 
-        async def mock_add_entities(entities):
+        def mock_add_entities(entities):
             added_entities.extend(entities)
 
         hass.data = {DOMAIN: {"entry_1": mock_coordinator_with_lights}}
@@ -58,9 +58,10 @@ class TestAsyncSetupEntry:
 
         await async_setup_entry(hass, entry, mock_add_entities)
 
-        assert len(added_entities) == 2
-        assert isinstance(added_entities[0], RemiNightLightEntity)
-        assert isinstance(added_entities[1], RemiBackgroundLightEntity)
+        assert len(added_entities) == 3
+        assert isinstance(added_entities[0], RemiBrightnessLightEntity)
+        assert isinstance(added_entities[1], RemiNightLightEntity)
+        assert isinstance(added_entities[2], RemiBackgroundLightEntity)
 
 
 class TestRemiNightLightEntity:
