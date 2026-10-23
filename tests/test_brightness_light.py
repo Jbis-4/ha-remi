@@ -163,7 +163,7 @@ async def test_invalid_command_does_not_write(coordinator, raw):
     coordinator.client.update_remi.assert_not_awaited()
 
 
-async def test_real_setup_registry_cleanup_and_light_services(
+async def test_real_setup_preserves_registry_and_supports_light_services(
     hass, enable_custom_integrations, mock_api_client, mock_config_entry_data,
 ):
     entry = MockConfigEntry(domain=DOMAIN, data=mock_config_entry_data, title="Test REMI")
@@ -191,7 +191,7 @@ async def test_real_setup_registry_cleanup_and_light_services(
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
-        assert all(registry.async_get(item.entity_id) is None for item in legacy)
+        assert all(registry.async_get(item.entity_id) is not None for item in legacy)
         assert registry.async_get(unrelated.entity_id) is not None
         assert registry.async_get(other.entity_id) is not None
         entity_id = registry.async_get_entity_id("light", DOMAIN, f"{MOCK_REMI_ID}_brightness")

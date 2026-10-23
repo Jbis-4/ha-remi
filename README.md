@@ -15,7 +15,7 @@ This is a community-maintained integration and is **not affiliated with or endor
 - **Select**: Clock face (Off / Awake / Sleepy / Semi-Awake / Smiley), clock format (12h / 24h), music mode
 - **Number**: Volume, noise alert threshold
 - **Switch**: Per-alarm enable/disable toggles (one switch per alarm)
-- **Lights**: Brightness (dimmable), night light (RGB), background color (RGB)
+- **Lights**: Brightness (dimmable), app background color (RGB)
 - **Alarm CRUD**: Create, update and delete alarms via HA services
 
 ---
@@ -71,8 +71,7 @@ This is a community-maintained integration and is **not affiliated with or endor
 | Volume | Number | Speaker volume (0–100) |
 | Brightness | Light | Dimmable upper light (off at 0%, maximum at 100%) |
 | Noise Alert Threshold | Number | Noise notification threshold (0–100) |
-| Night Light | Light | RGB night light color |
-| Background Color | Light | RGB background LED color |
+| App Background Color | Light | Color associated with the REMI in the official app |
 | Alarm (per alarm) | Switch | Enable/disable individual alarms |
 
 ---
@@ -80,9 +79,11 @@ This is a community-maintained integration and is **not affiliated with or endor
 ## Brightness migration
 
 Brightness is now a dimmable `light`, using the same API `luminosity` setting
-(0–100). The old `number` and the incorrectly labelled lux sensor are removed
-from this integration's entity registry entries when it loads. Their automation
-references are not rewritten. No ambient illuminance sensor is provided.
+(0–100). The old `number` and the incorrectly labelled lux sensor are no longer
+created. Previously registered entities may remain unavailable and can be removed
+manually in Home Assistant. These obsolete entries are not automatically deleted
+from the entity registry, and automation references are not rewritten. No ambient illuminance
+sensor is provided.
 
 Update automations that used `number.*_brightness` (or a renamed brightness
 number) to target the new light entity shown on the REMI device page. Entity IDs
@@ -117,6 +118,26 @@ For state conditions, use the light's `on`/`off` state. For numeric conditions,
 use its `brightness` attribute (0–255), not the old number's 0–100 state. A stored
 reference to the old lux sensor must be removed or replaced with an actual
 ambient light sensor. Historical values are not converted or reinterpreted.
+
+## RGB entity changes
+
+`App Background Color` changes the color associated with a REMI in the official
+UrbanHello app. It remains an RGB `light` with the same unique ID, existing
+entity ID and commands. Existing automations continue to target the same entity;
+a user-defined display name is preserved by Home Assistant.
+
+The former RGB `Night Light` entity has been removed. Commands to `lightnight`
+had no observable physical effect on two tested REMIs running firmware 329 and
+332. The field was initially absent on one device and appeared after RGB write
+experiments. These observations do not establish hardware support on other
+models. This integration no longer writes `lightnight` and does not delete or
+reset existing values on UrbanHello's servers.
+
+The obsolete Night Light entry may remain unavailable after an upgrade. Remove
+it manually along with references in dashboards, scripts and automations, or
+remove and re-add the integration if you do not need to retain its entities.
+These obsolete light entries are not automatically deleted. The app background color
+is not a replacement for a physical light.
 
 ## Alarm Services
 
