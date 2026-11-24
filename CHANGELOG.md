@@ -1,3 +1,59 @@
+## [0.2.8](https://github.com/timoa/ha-remi/compare/0.2.7...0.2.8) (2026-11-11)
+
+
+### Bug Fixes
+
+* corriger les mesures REMI, les alarmes et la reconnexion au cloud ([#40](https://github.com/timoa/ha-remi/issues/40)) ([1140d27](https://github.com/timoa/ha-remi/commit/1140d2785b79038950f184d1d9f28a5538efe895))
+
+## [0.2.7](https://github.com/timoa/ha-remi/compare/0.2.6...0.2.7) (2026-11-05)
+
+
+### Bug Fixes
+
+* **hacs:** declare the integration category ([2181824](https://github.com/timoa/ha-remi/commit/2181824caba61bd31f977e9b45afbd8662c5e5d2))
+
+## [0.2.6](https://github.com/timoa/ha-remi/compare/0.2.5...0.2.6) (2026-11-05)
+
+
+### Bug Fixes
+
+* expose REMI brightness as a slider ([7349f8e](https://github.com/timoa/ha-remi/commit/7349f8edcc4871905464a08b904d1aa84e261fc7))
+
+## [0.2.5](https://github.com/timoa/ha-remi/compare/0.2.4...0.2.5) (2026-11-05)
+
+
+### Bug Fixes
+
+* **renovate:** drop invalid "*" from matchPackageNames matcher ([3a2044a](https://github.com/timoa/ha-remi/commit/3a2044a8f0062f1691bc6c12bffc5e80d8791cc1)), closes [#19](https://github.com/timoa/ha-remi/issues/19)
+
+## [0.2.4](https://github.com/timoa/ha-remi/compare/0.2.3...0.2.4) (2026-11-05)
+
+
+### Bug Fixes
+
+* expose REMI brightness as a dimmable light ([52979e5](https://github.com/timoa/ha-remi/commit/52979e5b1c5eaeec161cb8fd7b63b82c858e1052))
+
+## [0.2.3](https://github.com/timoa/ha-remi/compare/0.2.2...0.2.3) (2026-11-05)
+
+
+### Bug Fixes
+
+* remove ineffective RGB night light and clarify app color ([2729ffd](https://github.com/timoa/ha-remi/commit/2729ffdf579c7a09d037938d0413ffb65418ad09))
+
+## [0.2.2](https://github.com/timoa/ha-remi/compare/0.2.1...0.2.2) (2026-11-05)
+
+
+### Bug Fixes
+
+* allow REMI noise alert thresholds up to 250 ([4ec29cd](https://github.com/timoa/ha-remi/commit/4ec29cd67519879d7cafe187f163a565dbea63f2))
+
+## [0.2.1](https://github.com/timoa/ha-remi/compare/0.2.0...0.2.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* correct REMI temperature conversion ([deb02dc](https://github.com/timoa/ha-remi/commit/deb02dcd28c8edb65073e97a09129d6f255d6768))
+
 # [0.2.0](https://github.com/timoa/ha-remi/compare/0.1.9...0.2.0) (2026-03-05)
 
 

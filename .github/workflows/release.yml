@@ -2,7 +2,7 @@ name: Release
 
 on:
   workflow_run:
-    workflows: ["Tests"]
+    workflows: ["CI"]
     types:
       - completed
     branches:
@@ -11,38 +11,58 @@ on:
 # Declare default permissions as read only.
 permissions: read-all
 
+# One release at a time: a second merge waits instead of racing on the version.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
 
   # -- RELEASE ------------------------------------------------------------
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    timeout-minutes: 15
+    # The HACS delivery only happens when every check of the CI workflow passed.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
 
     permissions:
       contents: write
 
     steps:
       - name: Harden GitHub Actions Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: 'main' # Force checkout of main branch to avoid cache from previous jobs
           persist-credentials: false
 
+      - name: Check the tested commit is still the tip of main
+        id: tested
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$TESTED_SHA" ]; then
+            echo "::warning::main moved on since $TESTED_SHA was tested, skipping the release: the newer commit gets its own CI run."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         with:
           app-id: ${{ vars.TIMOA_BOT_APP_ID }}
           private-key: ${{ secrets.TIMOA_BOT_PRIVATE_KEY }}
 
       - name: Create the Release
-        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90 # v6.0.0
+        if: steps.tested.outputs.skip != 'true'
+        uses: cycjimmy/semantic-release-action@d9bf53a078bd2f86aaffaec796dbb3d28f1b6f34 # v8.1.3
         with:
           extra_plugins: |
             @semantic-release/changelog

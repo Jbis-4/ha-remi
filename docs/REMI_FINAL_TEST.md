@@ -1,5 +1,10 @@
 # Essai physique REMI — branche test/remi-final
 
+> Archive de l'ancien essai. Pour la préparation actuelle, voir
+> [la synchronisation du 24 novembre 2026](SYNC_UPSTREAM_2026-11-24.md).
+> La formule de température et la lumière graduable ci-dessous ont été remplacées
+> par les nouvelles implémentations officielles.
+
 Ce document prépare une installation future. Aucun déploiement, arrêt,
 redémarrage, nettoyage du registre ou sauvegarde de production n'a été exécuté.
 La sauvegarde ci-dessous reste à créer et à vérifier après validation.
